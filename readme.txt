@@ -16,5 +16,5 @@ Requirements:
 
 Usage:
 On windows (Train and test):
-set PYTHONPATH=%PYTHONPATH%;C:\path_to_project\cross_target_stance_classification\
-C:\path_to_python\python.exe C:\path_to_project\cross_target_stance_classification\train_model_CrossNet_keras.py -tr_te --target cc_cc --n_aspect 1 --bsize 128 --rnn_dim 128 --dense_dim 64 --dropout_rate 0.2 --max_epoch 200 --learning_rate 0.001
+1) set PYTHONPATH=%PYTHONPATH%;C:\path_to_project\cross_target_stance_classification\
+2) C:\path_to_python\python.exe C:\path_to_project\cross_target_stance_classification\train_model_CrossNet_keras.py -tr_te --target cc_cc --n_aspect 1 --bsize 128 --rnn_dim 128 --dense_dim 64 --dropout_rate 0.2 --max_epoch 200 --learning_rate 0.001
