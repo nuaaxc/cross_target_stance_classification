@@ -1,6 +1,6 @@
 This is a keras implementation of CrossNet for paper Cross-Target Stance Classification with Self-Attention Networks (https://arxiv.org/abs/1805.06593)
 
-The experimental process consists of three steps:
+The experimental process consists of two steps:
 
 1) preprocessing (data_util.py and tokenizer): convert tweet text, target phrase, and label into internal matrix format, with shapes (batch_size, sent_length), (batch_size, target_length), (batch_size, num_class)
 
