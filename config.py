@@ -44,11 +44,11 @@ class DirConfig(object):
     }
     TARGETS = ['cc', 'a', 'fm', 'hc', 'la']
     TARGET_NUM = len(TARGET_INDEX)
-    TRAIN_FILE = DATA_DIR + 'semeval2016-task6-train+dev_%s.txt'
-    TEST_FILE = DATA_DIR + 'SemEval2016-Task6-subtaskA-testdata-gold_%s.txt'
-    TEST_DT_FILE = DATA_DIR + 'SemEval2016-Task6-subtaskB-testdata-gold.txt'
+    TRAIN_FILE = DATA_DIR + 'semeval2016-task6-subtaskA-train-dev-%s.txt'
+    TEST_FILE = DATA_DIR + 'SemEval2016-Task6-subtaskA-test-%s.txt'
+    TEST_DT_FILE = DATA_DIR + 'SemEval2016-Task6-subtaskA-test-dt.txt'
     AMP_RAW_DATA = DATA_DIR + 'adani_esa_till_201706_tweets.json'
-    TEST_AMP_FILE = DATA_DIR + 'SemEval2016-Task6-subtaskA-testdata-gold_amp.txt'
+    TEST_AMP_FILE = DATA_DIR + 'SemEval2016-Task6-subtaskA-test-amp.txt'
     # cache
     CACHE_DIR = DATA_DIR + 'cache/%s/'
     CACHE_TRAIN = CACHE_DIR + 'cache_train.npy'
@@ -81,48 +81,23 @@ class DirConfig(object):
 class TrainConfig(object):
     SEED = 2018
     LR = 0.001
-    TEST_SIZE = 0.1
-    RE_WEIGHT = True
     BATCH_SIZE = 128
     NB_EPOCH = 2
     REMOVE_STOPWORDS = 1
     USE_STEM = 0
     W2V_TYPE = 'glove'
-    MAX_SEQUENCE_LENGTH = 20
-    MAX_TARGET_LENGTH = 4
+    MAX_SENT_LENGTH = 20
+    MAX_TARGET_LENGTH = 5
     MAX_NB_WORDS = 200000
     WORD_EMBEDDING_DIM = 200
     VALIDATION_SPLIT = 0.1
-
-
-class TestConfig(object):
-    RE_WEIGHT = True
-    BATCH_SIZE = 64
 
 
 class CrossNetConfig(TrainConfig):
     MODEL = 'CrossNet'
     RNN_UNIT = 'LSTM'
     BASE_DIR = DirConfig.DATA_DIR + 'models/'
-    LSTM_DIM = 100
-    DENSE_DIM = 300
-    DROP_RATE = 0.1
-    R = 1
-
-
-class TOPConfig(TrainConfig):
-    MODEL = 'Top'
-    RNN_UNIT = 'LSTM'
-    BASE_DIR = DirConfig.DATA_DIR + 'models/'
-    LSTM_DIM = 100
-    DENSE_DIM = 300
-    DROP_RATE = 0.1
-
-
-class BiLSTMConfig(TrainConfig):
-    MODEL = 'BiLSTM'
-    RNN_UNIT = 'LSTM'
-    BASE_DIR = DirConfig.DATA_DIR + 'models/'
-    LSTM_DIM = 100
-    DENSE_DIM = 300
-    DROP_RATE = 0.1
+    RNN_DIM = 0
+    DENSE_DIM = 0
+    DROP_RATE = 0.
+    NUM_ASPECT = 0

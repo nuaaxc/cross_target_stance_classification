@@ -23,17 +23,17 @@ def get_word_seq(train, train_target, test, test_target):
     tk.fit_on_texts(train + train_target + test + test_target)
     word_index = tk.word_index
 
-    # training text sequence (input matrix: shape - [sentence_len, MAX_SEQUENCE_LENGTH])
+    # training text sequence (input matrix: shape - [sentence_len, MAX_SENT_LENGTH])
     train_x, train_t = '', ''
     if len(train) > 0 and len(train_target) > 0:
         train_x = tk.texts_to_sequences(train)
-        train_x = pad_sequences(train_x, maxlen=TrainConfig.MAX_SEQUENCE_LENGTH)
+        train_x = pad_sequences(train_x, maxlen=TrainConfig.MAX_SENT_LENGTH)
         train_t = tk.texts_to_sequences(train_target)
         train_t = pad_sequences(train_t, maxlen=TrainConfig.MAX_TARGET_LENGTH)
 
     # testing text sequence
     test_x = tk.texts_to_sequences(test)
-    test_x = pad_sequences(test_x, maxlen=TrainConfig.MAX_SEQUENCE_LENGTH)
+    test_x = pad_sequences(test_x, maxlen=TrainConfig.MAX_SENT_LENGTH)
     test_t = tk.texts_to_sequences(test_target)
     test_t = pad_sequences(test_t, maxlen=TrainConfig.MAX_TARGET_LENGTH)
 
@@ -85,23 +85,6 @@ def preprocess_texts(texts, is_target=False):
     return processed
 
 
-def extract_words(sentences):
-    """Extract chars from each sentence
-
-    # Arguments
-        sentences: list of sentences
-    """
-    w_seqs = []
-    for s in sentences:
-        s = re.sub(r"[?^,!.\/'+-=()]", " ", s)
-        s = s.strip()
-        words = []
-        for word in re.split('\\s+', s):
-            words.append(word)
-        w_seqs.append(words)
-    return w_seqs
-
-
 def load_word_embedding(which, vec_file):
     if which == 'glove':
         return load_glove_matrix(vec_file)
@@ -132,8 +115,8 @@ def save_glove_matrix(word2vec, word_index, output_file, config):
         embedding_vector = word2vec.get(word)
         if embedding_vector is not None:
             embedding_matrix[i] = embedding_vector
-        else:
-            embedding_matrix[i] = np.random.rand(200)
+        # else:
+        #     embedding_matrix[i] = np.random.rand(config.WORD_EMBEDDING_DIM)
 
     print('Vocabulary size: %d' % len(word_index))
     print('Valid word embeddings: %d' % np.sum(np.sum(embedding_matrix, axis=1) != 0))
@@ -179,7 +162,7 @@ def load_keras_model(model_config, target):
     return model
 
 
-def text2matrix(target_tr, target_te, word2vec):
+def text2matrix(target_tr, target_te, word2vec, encoding):
     """
     convert text data (train/validate/test) to matrix
     """
@@ -191,32 +174,30 @@ def text2matrix(target_tr, target_te, word2vec):
         train_data_tr = None
         if os.path.exists(DirConfig.TRAIN_FILE % target_tr):
             print('------ train:', DirConfig.TRAIN_FILE % target_tr)
-            train_data_tr = pd.read_csv(DirConfig.TRAIN_FILE % target_tr, encoding='windows-1252', sep='\t')
+            train_data_tr = pd.read_csv(DirConfig.TRAIN_FILE % target_tr, encoding=encoding, sep='\t')
         print('------ train:', DirConfig.TEST_FILE % target_tr)
-        train_data_te = pd.read_csv(DirConfig.TEST_FILE % target_tr, encoding='windows-1252', sep='\t')
+        train_data_te = pd.read_csv(DirConfig.TEST_FILE % target_tr, encoding=encoding, sep='\t')
         train_data = pd.concat([train_data_tr, train_data_te])
 
         test_data_tr = None
         if os.path.exists(DirConfig.TRAIN_FILE % target_te):
             print('------ test:', DirConfig.TRAIN_FILE % target_te)
-            test_data_tr = pd.read_csv(DirConfig.TRAIN_FILE % target_te, encoding='windows-1252', sep='\t')
+            test_data_tr = pd.read_csv(DirConfig.TRAIN_FILE % target_te, encoding=encoding, sep='\t')
         print('------ test:', DirConfig.TEST_FILE % target_te)
-        test_data_te = pd.read_csv(DirConfig.TEST_FILE % target_te, encoding='windows-1252', sep='\t')
+        test_data_te = pd.read_csv(DirConfig.TEST_FILE % target_te, encoding=encoding, sep='\t')
         test_data = pd.concat([test_data_tr, test_data_te])
     elif target_tr != 'dt':
         print('------ train:', DirConfig.TRAIN_FILE % target_tr)
-        train_data = pd.read_csv(DirConfig.TRAIN_FILE % target_tr, encoding='windows-1252', sep='\t')
+        train_data = pd.read_csv(DirConfig.TRAIN_FILE % target_tr, encoding=encoding, sep='\t')
         print('------ test:', DirConfig.TEST_FILE % target_te)
-        test_data = pd.read_csv(DirConfig.TEST_FILE % target_te, encoding='windows-1252', sep='\t')
+        test_data = pd.read_csv(DirConfig.TEST_FILE % target_te, encoding=encoding, sep='\t')
     else:
-        train_data = pd.read_csv(DirConfig.TEST_FILE % target_tr, encoding='windows-1252', sep='\t')
-        test_data = pd.read_csv(DirConfig.TEST_FILE % target_te, encoding='windows-1252', sep='\t')
+        train_data = pd.read_csv(DirConfig.TEST_FILE % target_tr, encoding=encoding, sep='\t')
+        test_data = pd.read_csv(DirConfig.TEST_FILE % target_te, encoding=encoding, sep='\t')
 
     # train text
     train = list(train_data.Tweet.values.astype(str))
     train_target = list(train_data.Target.values.astype(str))
-    train_target_ind = to_categorical(list(map(lambda t: DirConfig.TARGET_INDEX[t], train_target)),
-                                      num_classes=DirConfig.TARGET_NUM)
     train_labels = to_categorical(np.array([DirConfig.LABEL_MAPPING[label] for label in train_data.Stance.values]))
 
     assert np.all([t == DirConfig.CODE_TARGET[target_tr] for t in train_target])
@@ -224,8 +205,6 @@ def text2matrix(target_tr, target_te, word2vec):
     # test text
     test = list(test_data.Tweet.values.astype(str))
     test_target = list(test_data.Target.values.astype(str))
-    test_target_ind = to_categorical(list(map(lambda t: DirConfig.TARGET_INDEX[t], test_target)),
-                                     num_classes=DirConfig.TARGET_NUM)
     test_labels = to_categorical(np.array([DirConfig.LABEL_MAPPING[label] for label in test_data.Stance.values]))
     test_id = list(test_data.ID.values.astype(str))
     test_text = list(test_data.Tweet.values.astype(str))
@@ -251,13 +230,11 @@ def text2matrix(target_tr, target_te, word2vec):
     print('------ saving training matrix ...')
     np.save(DirConfig.CACHE_TRAIN % target, train_x)
     np.save(DirConfig.CACHE_TRAIN_TARGET % target, train_t)
-    np.save(DirConfig.CACHE_TRAIN_TARGET_INDEX % target, train_target_ind)
     np.save(DirConfig.CACHE_TRAIN_LABEL % target, train_labels)
 
     print('------ saving test matrix ...')
     np.save(DirConfig.CACHE_TEST % target, test_x)
     np.save(DirConfig.CACHE_TEST_TARGET % target, test_t)
-    np.save(DirConfig.CACHE_TEST_TARGET_INDEX % target, test_target_ind)
     np.save(DirConfig.CACHE_TEST_LABEL % target, test_labels)
     np.save(DirConfig.CACHE_TEST_ID % target, test_id)
     np.save(DirConfig.CACHE_TEST_TEXT % target, test_text)
@@ -278,13 +255,11 @@ def load_input_matrix(target, dir_config, train_config):
     print('------ training input matrix ...')
     train_x = np.load(open(dir_config.CACHE_TRAIN % target, 'rb'))
     train_t = np.load(open(dir_config.CACHE_TRAIN_TARGET % target, 'rb'))
-    train_target_ind = np.load(open(dir_config.CACHE_TRAIN_TARGET_INDEX % target, 'rb'))
     train_labels = np.load(open(dir_config.CACHE_TRAIN_LABEL % target, 'rb'))
 
     print('------ test input matrix ...')
     test_x = np.load(open(dir_config.CACHE_TEST % target, 'rb'))
     test_t = np.load(open(dir_config.CACHE_TEST_TARGET % target, 'rb'))
-    test_target_ind = np.load(open(dir_config.CACHE_TEST_TARGET_INDEX % target, 'rb'))
     test_labels = np.load(open(dir_config.CACHE_TEST_LABEL % target, 'rb'))
     test_id = np.load(open(dir_config.CACHE_TEST_ID % target, 'rb'))
     test_text = np.load(open(dir_config.CACHE_TEST_TEXT % target, 'rb'))
@@ -298,8 +273,8 @@ def load_input_matrix(target, dir_config, train_config):
     else:
         embedding_matrix = np.load(open(dir_config.W2V_CACHE % target, 'rb'))
 
-    return (train_x, train_t, train_labels, train_target_ind,
-            test_x, test_t, test_labels, test_target_ind, test_id, test_text,
+    return (train_x, train_t, train_labels,
+            test_x, test_t, test_labels, test_id, test_text,
             word_index, embedding_matrix)
 
 
@@ -336,14 +311,4 @@ def prepare_amp_dataset():
 if __name__ == '__main__':
     print('---- loading word2vec ...')
     word2vec = load_word_embedding(TrainConfig.W2V_TYPE, DirConfig.GLOVE_FILE)
-    # word2vec = None
-    for ta_tr in DirConfig.TARGETS + ['dt']:
-        for ta_te in DirConfig.TARGETS + ['dt']:
-            text2matrix(ta_tr, ta_te, word2vec)
-
-    # text2matrix('fm', 'fm', word2vec)
-    # text2matrix('la', 'la', word2vec)
-    # text2matrix('hc', 'hc', word2vec)
-    # text2matrix('dt', 'dt', word2vec)
-    # text2matrix('cc', 'amp', word2vec)
-    # prepare_amp_dataset()
+    text2matrix('cc', 'cc', word2vec, 'windows-1252')
