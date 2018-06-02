@@ -8,8 +8,10 @@ The process consists of three steps:
 
 3) testing and evaluation (train_model_CrossNet_keras.py)
 
-
 config.py: contains all directory and model configurations
 models/CrossNet.py: implementation of CrossNet
-models/layers.py; layer implementation of CrossNet
+models/layers.py: layer implementation of CrossNet
 
+Requirements:
+  keras 2.0.8
+  tensorflow 1.3
